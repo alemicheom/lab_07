@@ -27,7 +27,22 @@
 #include "setup_lab07.h"
         
 #define _XTAL_FREQ 4000000
-#define _tmr0_value 61 
+#define _tmr0_value 256
+
+
+// variables 
+uint8_t bandera =  0b001;
+
+uint8_t contador;       //variable que dec e inc con el contador de port C
+uint8_t remainder;      // 
+uint8_t unidades;       //variable de unidades 
+uint8_t decenas;        //variable de decenas 
+uint8_t centenas;       //variable de centenas
+
+uint8_t display_1;
+uint8_t display_2;
+uint8_t display_3;
+
 
 //interrupcion 
 
@@ -39,11 +54,13 @@ void __interrupt() isr (void)
         if (PORTBbits.RB0 == 0)
         {
             PORTA++;
+            contador++;
         }
         
         if (PORTBbits.RB1 == 0)
         {
             PORTA--;
+            contador--;
         }
         INTCONbits.RBIF = 0;     
             
@@ -51,19 +68,59 @@ void __interrupt() isr (void)
     
     if (T0IF)
     {
-        PORTC++;
-        INTCONbits.T0IF = 0;
-        TMR0 = _tmr0_value;     
-            
-    }
-    return;
+        // incrementa port C en cada interrupción del TMR0
+        //PORTC++;
+        //INTCONbits.T0IF = 0;
+        //TMR0 = _tmr0_value;     
+        
+       // rutina para multiplexado 
+        
+                if (bandera ==  0)
+                {
+                    PORTD = display_3;
+                    PORTE = 0b001;
+                    bandera = 1;
+                    
+                }
+                
+                else if (bandera == 1)
+                {
+                    PORTD = display_2;
+                    PORTE = 0b010; 
+                    bandera = 2;
+                 
+                }
+                
+                else if (bandera ==  2)
+                {
+                    PORTD = display_1;
+                    PORTE = 0b100 ;  
+                    bandera = 0; 
+                }
+           
+             INTCONbits.T0IF = 0; 
+     }
+    return ;       
 }
+   
+
   
 
 void main(void) {
     setup();
+    int tabla[10] = {63, 6, 91, 79, 102, 109, 125, 7, 127, 111};
+    
     while(1){
- 
+        centenas = contador/100 ;
+        remainder = contador % 100;
+        decenas = remainder /10;
+        unidades = remainder % 10;
+        
+        display_1 = tabla[unidades];
+        display_2 = tabla[decenas];
+        display_3 = tabla[centenas];
+             
+       
     }
     return ;
 }
